@@ -3,6 +3,9 @@ package com.sachinsk.company_microservice.company.impl;
 import com.sachinsk.company_microservice.company.Company;
 import com.sachinsk.company_microservice.company.CompanyRepository;
 import com.sachinsk.company_microservice.company.CompanyService;
+import com.sachinsk.company_microservice.company.clients.ReviewClient;
+import com.sachinsk.company_microservice.company.dto.ReviewMessage;
+import jakarta.ws.rs.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +17,9 @@ public class CompanyServiceImpl implements CompanyService {
 
     @Autowired
     private CompanyRepository companyRepository;
+
+    @Autowired
+    private ReviewClient reviewClient;
 
     @Override
     public List<Company> getAllCompanies() {
@@ -51,5 +57,14 @@ public class CompanyServiceImpl implements CompanyService {
         } else {
             return false;
         }
+    }
+
+    @Override
+    public void updateCompanyRating(ReviewMessage reviewMessage) {
+        Company company = companyRepository.findById(reviewMessage.getCompanyId())
+                .orElseThrow(() -> new NotFoundException("Company Not Found" +reviewMessage.getCompanyId()));
+        double averageRating = reviewClient.getAverageRatingForCompany(reviewMessage.getCompanyId());
+        company.setRating(averageRating);
+        companyRepository.save(company);
     }
 }
