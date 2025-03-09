@@ -33,6 +33,7 @@ services:
     ports:
       - 9411:9411
     networks:
+      - microservice-network
       - postgres
   rabbitmq:
     image: rabbitmq:3-management
@@ -41,9 +42,94 @@ services:
       - 5672:5672
       - 15672:15672
     networks:
+      - microservice-network
       - postgres
 
+  config-server-ms:
+    image: sachinkaushik1/config-server-ms:latest
+    container_name: config-server-ms
+    ports:
+      - 8888:8888
+    depends_on:
+      - service-registry-jb
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  service-registry-jb:
+    image: sachinkaushik1/service-registry-jb:latest
+    container_name: service-registry-jb
+    ports:
+      - 8761:8761
+    depends_on:
+      - rabbitmq
+      - zipkin
+      - postgres
+      - pgadmin
+    networks:
+      - microservice-network
+      - postgres
+
+  company-service:
+    image: sachinkaushik1/company-service:latest
+    container_name: company
+    ports:
+      - 8081:8081
+    depends_on:
+      - service-registry-jb
+      - config-server-ms
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  job-service:
+    image: sachinkaushik1/job-service:latest
+    container_name: job
+    ports:
+      - 8082:8082
+    depends_on:
+      - service-registry-jb
+      - config-server-ms
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  review-service:
+    image: sachinkaushik1/review-service:latest
+    container_name: review
+    ports:
+      - 8083:8083
+    depends_on:
+      - service-registry-jb
+      - config-server-ms
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  gateway-ms:
+    image: sachinkaushik1/gateway-ms:latest
+    container_name: gateway-ms
+    ports:
+      - 8084:8084
+    depends_on:
+      - service-registry-jb
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
 networks:
+  microservice-network:
+    driver: bridge
   postgres:
     driver: bridge
 
